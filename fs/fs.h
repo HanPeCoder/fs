@@ -2,8 +2,6 @@
 #ifndef FS_H
 #define FS_H
 
-
-
 #include "fcb.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,8 +14,8 @@ struct i_block
 };
 
 void init_disk();
-struct i_block* request_block(const int n);
-void write_disk(fcb fb, const char* buffer, const int size);
+void write_disk(struct fcb* fb, const char* buffer, const int size);
+
 // bitmap.c
 
 #define LOW 10
@@ -33,5 +31,8 @@ void save_bitmap(struct bitmap* bm);
 void recycle_block(const int b);
 struct bitmap* read_bitmap();
 int* get_free_block(const int n);
+struct i_block* read_disk(struct fcb* fb);
+// dir.c
+void add(struct fcb* fb);
 
 #endif // !FS_H
