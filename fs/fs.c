@@ -1,8 +1,18 @@
 ﻿#include <stdio.h>
 #include "fs.h"
-int main()
+#include "fcb.h"
+int main(int argc, char* argv[])
 {
 	init_disk();
+	struct i_block* blk = get_block(0);
+	struct fcb* root;
+	root = (struct fcb*)blk->data;
+	printf(root[0].filename);
+}
+
+
+/*
+init_disk();
 	struct fcb fb;
 	save_bitmap(create_bitmap());
 	char* buffer = "123456";
@@ -22,4 +32,4 @@ int main()
 	for (int i = 0; i < 3; i++) {
 		printf("%d->", i_blk[i].next);
 	}
-}
+*/

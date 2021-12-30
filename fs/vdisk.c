@@ -4,12 +4,12 @@
 */
 
 #include "fs.h"
+#include "fcb.h"
 
 #define DISK_SIZE 100*512
 #define BLOCK_SIZE 512
 #define BLOCK_NUM DISK_SIZE/BLOCK_SIZE // 100
 #define DATA_SIZE 508
-
 
 //分配磁盘空间
 char* allot_disk()
@@ -58,7 +58,6 @@ void put_block(struct i_block* b, int bid)
 	char* vdisk = disk_out();
 	struct i_block* i_blk = (struct i_block*)vdisk;
 	i_blk[bid] = (*b);
-	printf("%d->", i_blk[bid].next);
 	disk_in(vdisk);
 }
 
@@ -66,13 +65,31 @@ void init_disk()
 {
 	char* buffer = allot_disk();
 	struct i_block* i_blk = (struct i_block*)(buffer);
-	FILE* fp = NULL;
 	for (size_t i = 0; i < 100; i++) {
 		i_blk[i].next = -1;
 	}
-	save_bitmap(read_bitmap());
+	struct bitmap* bm = create_bitmap();
+	struct fcb* fb = mkdir("root", 0);
+	fb[0].first_block = 0;
+	fb[0].size = 1;
+	char* tem = (char*)fb;
+	for (int i = 0; i < DATA_SIZE; i++) {
+		i_blk[0].data[i] = tem[i];
+	}
+	get_free_block(1);
+	save_bitmap(bm);
 	disk_in(buffer);
 	relese_disk(buffer);
+}
+
+void mount()
+{
+	// 读位视图
+	bitm = read_bitmap();
+	// 读取根目录
+	struct i_block* blk = get_block(0);
+	root = (struct fcb*)blk->data;
+	current = root;
 }
 
 void release_block(const int b)
@@ -80,7 +97,7 @@ void release_block(const int b)
 	recycle_block(b);
 }
 
-void write_disk(struct fcb* fb, const char* buffer, const int size)
+void write_file(struct fcb* fb, const char* buffer, const int size)
 {
 	int n = size / DATA_SIZE + ((size%DATA_SIZE != 0) ? 1 : 0);
 	int* bid = get_free_block(n);
@@ -107,7 +124,7 @@ void write_disk(struct fcb* fb, const char* buffer, const int size)
 	}
 }
 
-struct i_block* read_disk(struct fcb* fb)
+char* read_file(struct fcb* fb)
 {
 	int n = fb->size;
 	struct i_block* i_blk = (struct i_block*)malloc(n*sizeof(struct i_block));
@@ -118,5 +135,11 @@ struct i_block* read_disk(struct fcb* fb)
 			current = i_blk[i].next;
 		}
 	}
-	return i_blk;
+	char* buffer = (char*)malloc(n * DATA_SIZE * sizeof(char*));
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < DATA_SIZE; j++) {
+			buffer[i * j] = i_blk[i].data[j];
+		}
+	}
+	return buffer;
 }

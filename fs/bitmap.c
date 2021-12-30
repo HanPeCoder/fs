@@ -4,7 +4,7 @@ struct bitmap* create_bitmap()
 {
 	struct bitmap* bm = (struct bitmap*)malloc(sizeof(struct bitmap));
 	if (bm) {
-		bm->free_size = 100;
+		bm->free_size = LOW*COL;
 		for (int i = 0; i < LOW; i++) {
 			for (int j = 0; j < COL; j++) {
 				bm->map[i][j] = 0;
