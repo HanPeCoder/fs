@@ -25,6 +25,7 @@ struct fcb* mkdir(const char* filename, int mode)
 	return dir;
 }
 
+// Â·¾¶½âÎö
 void find_entry(const char* path, struct fcb* fb)
 {
 
