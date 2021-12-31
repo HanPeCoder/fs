@@ -24,9 +24,6 @@
     <ClCompile Include="dir.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="buffer.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="bitmap.c">
       <Filter>源文件</Filter>
     </ClCompile>

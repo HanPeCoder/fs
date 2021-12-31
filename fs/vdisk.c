@@ -1,8 +1,3 @@
-/*
-* 
-* 
-*/
-
 #include "fs.h"
 #include "fcb.h"
 
@@ -27,7 +22,7 @@ void relese_disk(char* vdisk)
 char* disk_out()
 {
 	char* buffer = allot_disk();
-	FILE* fp;
+	FILE* fp = NULL;
 	fp = fopen("disk.dat", "rb");
 	if (fp) {
 		fread(buffer, DISK_SIZE, 1, fp);
@@ -38,7 +33,7 @@ char* disk_out()
 
 void disk_in(const char* buffer)
 {
-	FILE* fp;
+	FILE* fp = NULL;
 	fp = fopen("disk.dat", "wb");
 	if (fp) {
 		fwrite(buffer, DISK_SIZE, 1, fp);
@@ -68,16 +63,20 @@ void init_disk()
 	for (size_t i = 0; i < 100; i++) {
 		i_blk[i].next = -1;
 	}
-	struct bitmap* bm = create_bitmap();
-	struct fcb* fb = mkdir("root", 0);
-	fb[0].first_block = 0;
-	fb[0].size = 1;
-	char* tem = (char*)fb;
+	save_bitmap(create_bitmap());
+	struct fcb* dir = (struct fcb*)malloc(20 * sizeof(struct fcb*));
+	char* filename = "root";
+	int len = strlen("filename");
+	for (int i = 0; i < len; i++) {
+		dir[0].filename[i] = filename[i];
+	}
+	dir[0].first_block = *get_free_block(1);
+	dir[0].mode = 0;
+	dir[0].size = 1;
+	char* tem = (char*)dir;
 	for (int i = 0; i < DATA_SIZE; i++) {
 		i_blk[0].data[i] = tem[i];
 	}
-	get_free_block(1);
-	save_bitmap(bm);
 	disk_in(buffer);
 	relese_disk(buffer);
 }
@@ -88,7 +87,11 @@ void mount()
 	bitm = read_bitmap();
 	// ¶ÁÈ¡¸ùÄ¿Â¼
 	struct i_block* blk = get_block(0);
-	root = (struct fcb*)blk->data;
+	char* buffer = (char*)malloc(DATA_SIZE * sizeof(char));
+	for (int i = 0; i < DATA_SIZE; i++) {
+		buffer[i] = blk->data[i];
+	}
+	root = (struct fcb*)buffer;
 	current = root;
 }
 
@@ -124,9 +127,17 @@ void write_file(struct fcb* fb, const char* buffer, const int size)
 	}
 }
 
+
+
 char* read_file(struct fcb* fb)
 {
-	int n = fb->size;
+	int n;
+	if (fb->mode == 1) {
+		n = fb->size;
+	}
+	else if (fb->mode == 0) {
+		n = 1;
+	}
 	struct i_block* i_blk = (struct i_block*)malloc(n*sizeof(struct i_block));
 	int current = fb->first_block;
 	if (i_blk != NULL) {
@@ -138,8 +149,18 @@ char* read_file(struct fcb* fb)
 	char* buffer = (char*)malloc(n * DATA_SIZE * sizeof(char*));
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < DATA_SIZE; j++) {
-			buffer[i * j] = i_blk[i].data[j];
+			buffer[i * j+j] = i_blk[i].data[j];
 		}
 	}
 	return buffer;
+}
+
+void write_dir(struct fcb* fb)
+{
+	char* buffer = (char*)fb;
+	struct i_block* current = get_block(fb->first_block);
+	for (int i = 0; i < DATA_SIZE; i++) {
+		current->data[i] = buffer[i];
+	}
+	put_block(current, fb->first_block);
 }

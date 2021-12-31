@@ -7,7 +7,7 @@
 
 struct fcb
 {
-	char* filename; // 文件名（目录名）
+	char filename[12]; // 文件名（目录名）
 	int first_block; // 文件下一块号（目录所在块号）
 	int size;	// 文件占用块数（目录数）
 	int mode;	// 文件模式：0表示目录，1表示文件
@@ -15,28 +15,33 @@ struct fcb
 
 #endif // !FCB_H
 
-inline struct fcb* create(char* name)
+inline struct fcb* get_empty_fcb()
 {
-	struct fcb* fb = (struct fcb*)malloc(sizeof(struct fcb));
-	strcpy(fb->filename, name);
-	return fb;
+	return (struct fcb*)malloc(sizeof(struct fcb));
 }
 
-inline struct fcb* open(char* name)
+inline struct fcb* create(const char* name,int mode)
 {
-	//检索目录
-	// find file
-	return (struct fcb*)malloc(sizeof(struct fcb));
+	struct fcb* fb = (struct fcb*)malloc(sizeof(struct fcb));
+	int len = strlen(name);
+	for (int i = 0; i < len; i++) {
+		fb->filename[i] = name[i];
+	}
+	if (len < 12) {
+		fb->filename[len] = '\0';
+	}
+	fb->mode = mode;
+	return fb;
 }
 
 
 inline void save(struct fcb* fb, char* buffer, int size)
 {
-	//write_disk(fb, buffer, size);
-	
+	write_file(fb, buffer, size);
+	add(fb);
 }
 
 inline void close(char* name)
 {
-
+	
 }

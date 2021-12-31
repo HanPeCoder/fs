@@ -1,4 +1,0 @@
-/*
-* Create memory buffer
-*/
-
