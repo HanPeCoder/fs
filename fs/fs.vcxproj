@@ -141,6 +141,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bitmap.c" />
+    <ClCompile Include="buffer.c" />
     <ClCompile Include="dir.c" />
     <ClCompile Include="fs.c" />
     <ClCompile Include="vdisk.c" />

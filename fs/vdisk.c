@@ -100,9 +100,19 @@ void release_block(const int b)
 	recycle_block(b);
 }
 
-void write_file(struct fcb* fb, const char* buffer, const int size)
+void write_file(struct fcb* fb, const char* buffer, const int len)
 {
-	int n = size / DATA_SIZE + ((size%DATA_SIZE != 0) ? 1 : 0);
+	if (buffer == NULL) {
+		int* bid = get_free_block(1);
+		if (bid == NULL) {
+			printf("Insufficient disk space");
+			return;
+		}
+		fb->first_block = bid[0];
+		fb->size = 1;
+		return;
+	}
+	int n = len/ DATA_SIZE + ((len%DATA_SIZE != 0) ? 1 : 0);
 	int* bid = get_free_block(n);
 	if (bid == NULL) {
 		printf("Insufficient disk space");
@@ -126,8 +136,6 @@ void write_file(struct fcb* fb, const char* buffer, const int size)
 		}
 	}
 }
-
-
 
 char* read_file(struct fcb* fb)
 {
@@ -153,6 +161,32 @@ char* read_file(struct fcb* fb)
 		}
 	}
 	return buffer;
+}
+
+void update(struct fcb* fb, const char* buffer, const int len)
+{
+	if (buffer == NULL) {
+		return;
+	}
+	int n = fb->size;
+	int bid = fb->first_block;
+	if (bid != NULL) {
+		struct i_block* current = get_block(bid);
+		for (int i = 0; i < DATA_SIZE; i++) {
+			current->data[i] = buffer[i];
+		}
+		put_block(current, bid);
+		bid = current->next;
+		current = get_block(bid);
+		for (int i = 1; i < n; i++) {
+			for (int j = 0; j < DATA_SIZE; j++) {
+				current->data[j] = buffer[i + DATA_SIZE];
+			}
+			put_block(current, bid);
+			bid = current->next;
+			current = get_block(bid);
+		}
+	}
 }
 
 void write_dir(struct fcb* fb)

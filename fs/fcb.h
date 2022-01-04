@@ -13,14 +13,14 @@ struct fcb
 	int mode;	// 文件模式：0表示目录，1表示文件
 };
 
-#endif // !FCB_H
+struct fcb* currentfile;
 
 inline struct fcb* get_empty_fcb()
 {
 	return (struct fcb*)malloc(sizeof(struct fcb));
 }
 
-inline struct fcb* create(const char* name,int mode)
+inline struct fcb* create(const char* name, int mode)
 {
 	struct fcb* fb = (struct fcb*)malloc(sizeof(struct fcb));
 	int len = strlen(name);
@@ -35,13 +35,32 @@ inline struct fcb* create(const char* name,int mode)
 }
 
 
-inline void save(struct fcb* fb, char* buffer, int size)
+inline char* read()
 {
-	write_file(fb, buffer, size);
-	add(fb);
+	char* buffer = (char*)malloc(10);
+	buffer = read_file(currentfile);
+	return buffer;
 }
 
-inline void close(char* name)
+inline int open(const char* filename)
 {
-	
+	currentfile = sys_open(filename);
+	if (currentfile != NULL) {
+		return 1;
+	}
+	return 0;
 }
+
+inline void save()
+{
+	update(currentfile, ibuf, strlen(ibuf));
+}
+
+
+inline int close()
+{
+	return 1;
+}
+
+#endif // !FCB_H
+

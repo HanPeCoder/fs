@@ -41,6 +41,10 @@ struct fcb* mkdir(const char* filename, int mode)
 	}
 	else if (mode == 1) {
 		dir = create(filename, mode);
+		char* buffer = NULL;
+		write_file(dir, buffer, 0);
+		add(dir);
+		write_dir(dir);
 	}
 	return dir;
 }
@@ -66,21 +70,21 @@ char** ls()
 	return nl;
 }
 
-void add(struct fcb* fb)
+int add(struct fcb* fb)
 {
 
 	if (current[0].size > MAX_ENTRY_NUM)
 	{
-		printf("Ä¿Â¼Âú\n");
+		return 0;
 	}
 	else
 	{
 		current[current[0].size] = *fb;
 		current[0].size++;
 		write_dir(current);
+		return 1;
 	}
 }
-
 
 int compare(char* str1, char* str2)
 {
@@ -98,9 +102,15 @@ int compare(char* str1, char* str2)
 
 struct fcb* read_dir(struct fcb* dir)
 {
-	char* buffer = read_file(&dir[0]);
-	struct fcb* fb = (struct fcb*)buffer;
-	return fb;
+	if (dir->mode == 0) {
+		char* buffer = read_file(&dir[0]);
+		struct fcb* fb = (struct fcb*)buffer;
+		return fb;
+	}
+	else if (dir->mode == 1) {
+		return dir;
+	}
+	
 }
 
 static struct fcb* get_dir(const char* path)
@@ -116,15 +126,19 @@ static struct fcb* get_dir(const char* path)
 	}
 	while (1) {
 		if (!c) {
+			free(name);
 			return now;
 		}
-		char* name = (char*)malloc(12);
 		int namelen = 0;
 		for (namelen = 0; path[namelen] != '/' && path[namelen]; namelen++);
 		memmove(name, path, namelen);
 		name[namelen] = '\0';
 		path += namelen;
 		c = path[0];
+		if (c == '/') {
+			path++;
+			c = path[0];
+		}
 		now = find_entry(name, now);
 		now = read_dir(now);
 	}
@@ -144,17 +158,20 @@ struct fcb* find_entry(const char* name, struct fcb* dir)
 	return NULL;
 }
 
-int sys_open(const char* filename)
+struct fcb* sys_open(const char* filename)
 {
 	pre = current;
-	struct fcb* fb = get_dir(filename);
+	struct fcb* fb = NULL;
+	fb = get_dir(filename);
 	if (fb->mode == 0) {
-		current = fb;
+		if (pre != current) {
+			current = fb;
+			return NULL;
+		}
+	} else if (fb->mode == 1) {
+		return fb;
 	}
-	if (pre != current) {
-		return 1;
-	}
-	return 0;
+	return NULL;
 }
 
 int sys_close(const char* filename)
@@ -199,7 +216,7 @@ int change_loc(const char* path, const char* name)
 	current = dect;
 	add(src);
 	current = pre;
-	rm_file(src);
+	rm_file(src->filename);
 	return 1;
 }
 
@@ -260,4 +277,9 @@ int cd(const char* path)
 	fb = get_dir(path);
 	current = fb;
 	return 1;
+}
+
+struct fcb* test()
+{
+	return get_dir("test");
 }
